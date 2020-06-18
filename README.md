@@ -3,11 +3,19 @@ Blandwidth is a compact memory bandwidth tester for x64 CPUs running Windows.  I
 
 Blandwidth is designed to determine the sustainable real bandwidth from the processor to L1, L2, L3, and main memory both during single thread and multiple thread workloads.  It is meant to produce numbers programmers can use to create realistic estimates of how much read, write, or read-write bandwidth their algorithms can expect for each specific processor and number of concurrent threads.
 
+# Building
+
 To build Blandwidth, install either Visual Studio or CLANG, cd to the blandwidth directory and run:
 
 ```
 build.bat
 ```
+
+Note that Blandwidth on Windows has no prerequisites and no dependencies other than the user32.lib and kernel32.lib import libraries.  It does not require a C runtime library of any kind, or any other library.
+
+If your system supports llvm-mca, the build.bat file will run it and write into the build directory a cycle analysis of the memory routines.  This can be useful for ensuring that your version of the C compiler is generating efficient memory test routines.
+
+# Running
 
 To run Blandwidth, run a release executable and pipe the output to the file where measurements should be stored, eg.: 
 
