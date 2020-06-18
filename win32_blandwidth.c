@@ -1,7 +1,7 @@
 /* ========================================================================
    $File: work/tools/blandwidth/win32_blandwidth.c $
-   $Date: 2020/06/17 07:12:30 UTC $
-   $Revision: 1 $
+   $Date: 2020/06/18 00:32:25 UTC $
+   $Revision: 2 $
    $Creator: Casey Muratori $
    ======================================================================== */
 
@@ -10,6 +10,7 @@
 #include <smmintrin.h>
 #include <wmmintrin.h>
 #ifdef __clang__
+#include <intrin.h>
 #include <avxintrin.h>
 #include <avx2intrin.h>
 #include <avx512fintrin.h>
