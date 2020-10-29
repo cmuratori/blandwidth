@@ -106,17 +106,14 @@ ThreadEntryPoint(void *Passthrough)
 {
     win32_queues *Queues = (win32_queues *)Passthrough;
     
-    /* NOTE(casey): The semantic analysis in modern compilers is actively awful.  I had to do while() here 
-       because if I did for(;;), it errored out because the return(0) was unreachable, and if I got rid of 
-       the return(0), it errored out because the function didn't return a value.  I spend so much of my
-       time dealing with stupid stuff like this, it makes me loathe C/C++ specs and compilers, because they 
-       are clearly not designed with effective programming in mind :( */
-    while(Queues)
+    for (;;)
     {
         DWORD IgnoredBytes;
         ULONG_PTR IgnoredKey;
         OVERLAPPED *Overlapped;
         GetQueuedCompletionStatus(Queues->Dispatch, &IgnoredBytes, &IgnoredKey, &Overlapped, INFINITE);
+        if (Overlapped == NULL) /* special termination packet */
+                break;
         memory_operation *Op = (memory_operation *)Overlapped;
         
         do
@@ -196,6 +193,7 @@ mainCRTStartup(void)
     Queues.Result = CreateIoCompletionPort(INVALID_HANDLE_VALUE, 0, 0, 0);
     
     DWORD *ThreadIDs = (DWORD *)AllocateAndClear(MaxThreadCount*SizeOf(DWORD));
+    HANDLE *ThreadHandles = (HANDLE *)AllocateAndClear(MaxThreadCount*SizeOf(DWORD));
     for(u32 ThreadIndex = 0;
         ThreadIndex < MaxThreadCount;
         ++ThreadIndex)
@@ -206,9 +204,8 @@ mainCRTStartup(void)
         {
             Statusf("Unable to create thread");
             ExitProcess(2);
-        }
-        
-        CloseHandle(Thread);
+        }        
+        ThreadHandles[ThreadIndex] = Thread;
     }
     
     //
@@ -225,6 +222,54 @@ mainCRTStartup(void)
     Win32Context.Queues = Queues;
     
     Main(&Win32Context.Context);
+
+    //
+    // NOTE: This is a crude way to notify all worker threads that they should
+    // terminate. We send #threads termination packets to the completion port.
+    // Since each thread should terminate after reading one termination packet
+    // this should terminate all threads.
+    //
+    // A problem with this that we accept is that this is not very resilient
+    // to bugs. If, suppose, we don't know the exact number of workers on the
+    // IOCP (it might be dynamic, or some workers might have prematurely
+    // terminated, etc) then we might end up posting too few or too many
+    // completion packets. Both would be a problem, since (I assume) sending
+    // too many can block the sender.
+    //
+    // I currently do not know a better way to notify IOCP workers. We could
+    // use a manual-reset event that all workers wait for, while simultaneously
+    // waiting for packets to arrive at the the completion port. The problem
+    // with this approach is that the IOCP would (I assume) signal all workers
+    // when there is a single packet available. This is called the thundering
+    // herd problem. So it seems that we're probably forced to route all
+    // messages to workers through the IOCP. That is one reason why I'm not so
+    // convinced that IOCP is a good design. But I don't know - maybe there is
+    // an actually good way to handle termination.
+    //
+
+    for (u32 ThreadIndex = 0;
+            ThreadIndex < MaxThreadCount;
+            ++ThreadIndex)
+    {
+        // Send special termination packet (numBytes, key, OVERLAPPED pointer all set to NULL)
+        PostQueuedCompletionStatus(Win32Context.Queues.Dispatch, 0, 0, NULL);
+    }
+
+    //
+    // NOTE: wait for all threads to terminate
+    //
+
+    for (u32 ThreadIndex = 0;
+            ThreadIndex < MaxThreadCount;
+            ++ThreadIndex)
+    {
+            Statusf("Waiting for thread %d (thread id %d)", (int)ThreadIndex, (int)ThreadIDs[ThreadIndex]);
+            if (WaitForSingleObject(ThreadHandles[ThreadIndex], INFINITE) != WAIT_OBJECT_0)
+            {
+                    Statusf("ERROR: Wait failed");
+                    ExitProcess(1);
+            }
+    }
     
     //
     // NOTE(casey): Exit
