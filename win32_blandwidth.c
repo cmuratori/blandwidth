@@ -247,9 +247,9 @@ mainCRTStartup(void)
     // an actually good way to handle termination.
     //
 
-    for (u32 ThreadIndex = 0;
-            ThreadIndex < MaxThreadCount;
-            ++ThreadIndex)
+    for(u32 ThreadIndex = 0;
+        ThreadIndex < MaxThreadCount;
+        ++ThreadIndex)
     {
         // Send special termination packet (numBytes, key, OVERLAPPED pointer all set to NULL)
         PostQueuedCompletionStatus(Win32Context.Queues.Dispatch, 0, 0, NULL);
@@ -259,16 +259,16 @@ mainCRTStartup(void)
     // NOTE: wait for all threads to terminate
     //
 
-    for (u32 ThreadIndex = 0;
-            ThreadIndex < MaxThreadCount;
-            ++ThreadIndex)
+    for(u32 ThreadIndex = 0;
+        ThreadIndex < MaxThreadCount;
+        ++ThreadIndex)
     {
-            Statusf("Waiting for thread %d (thread id %d)", (int)ThreadIndex, (int)ThreadIDs[ThreadIndex]);
-            if (WaitForSingleObject(ThreadHandles[ThreadIndex], INFINITE) != WAIT_OBJECT_0)
-            {
-                    Statusf("ERROR: Wait failed");
-                    ExitProcess(1);
-            }
+        Statusf("Waiting for thread %d (thread id %d)", (int)ThreadIndex, (int)ThreadIDs[ThreadIndex]);
+        if (WaitForSingleObject(ThreadHandles[ThreadIndex], INFINITE) != WAIT_OBJECT_0)
+        {
+            Statusf("ERROR: Wait failed");
+            ExitProcess(1);
+        }
     }
     
     //
