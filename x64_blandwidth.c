@@ -5,6 +5,9 @@
    $Creator: Casey Muratori $
    ======================================================================== */
 
+// NOTE(keeba): This is used instead of _mm256_xor_si256 because _mm256_xor_ps does not require AVX2.
+#define Xor256(A, B) _mm256_castps_si256(_mm256_xor_ps(_mm256_castsi256_ps(A), _mm256_castsi256_ps(B)))
+
 function void
 X64Read128(memory_operation *Op)
 {
@@ -217,11 +220,11 @@ X64Read256(memory_operation *Op)
         __m256i L1 = _mm256_loadu_si256(Source + 1);
         __m256i L2 = _mm256_loadu_si256(Source + 2);
         __m256i L3 = _mm256_loadu_si256(Source + 3);
-        
-        V0 = _mm256_xor_si256(V0, L0);
-        V1 = _mm256_xor_si256(V1, L1);
-        V2 = _mm256_xor_si256(V2, L2);
-        V3 = _mm256_xor_si256(V3, L3);
+
+        V0 = Xor256(V0, L0);
+        V1 = Xor256(V1, L1);
+        V2 = Xor256(V2, L2);
+        V3 = Xor256(V3, L3);
 
         SourceOffset = (SourceOffset + Pattern.SourceStride) & Pattern.SourceMask;
     }
@@ -254,10 +257,10 @@ X64Write256(memory_operation *Op)
 
         __m256i *Dest = (__m256i *)(Pattern.Dest + DestOffset);
 
-        V0 = _mm256_xor_si256(V0, V1);
-        V1 = _mm256_xor_si256(V1, V2);
-        V2 = _mm256_xor_si256(V2, V3);
-        V3 = _mm256_xor_si256(V3, V0);
+        V0 = Xor256(V0, V1);
+        V1 = Xor256(V1, V2);
+        V2 = Xor256(V2, V3);
+        V3 = Xor256(V3, V0);
         
         _mm256_storeu_si256(Dest + 0, V0);
         _mm256_storeu_si256(Dest + 1, V1);
@@ -302,10 +305,10 @@ X64ReadWrite256(memory_operation *Op)
         __m256i L2 = _mm256_loadu_si256(Source + 2);
         __m256i L3 = _mm256_loadu_si256(Source + 3);
 
-        V0 = _mm256_xor_si256(V0, L0);
-        V1 = _mm256_xor_si256(V1, L1);
-        V2 = _mm256_xor_si256(V2, L2);
-        V3 = _mm256_xor_si256(V3, L3);
+        V0 = Xor256(V0, L0);
+        V1 = Xor256(V1, L1);
+        V2 = Xor256(V2, L2);
+        V3 = Xor256(V3, L3);
         
         _mm256_storeu_si256(Dest + 0, V0);
         _mm256_storeu_si256(Dest + 1, V1);
