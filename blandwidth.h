@@ -1,7 +1,7 @@
 /* ========================================================================
    $File: work/tools/blandwidth/blandwidth.h $
    $Date: 2020/06/17 05:03:59 UTC $
-   $Revision: 4 $
+   $Revision: 5 $
    $Creator: Casey Muratori $
    ======================================================================== */
 
@@ -57,11 +57,11 @@
 #endif
 
 #ifdef __clang__
-#define function_avx2 static __attribute__ ((__target__("avx2")))
+#define function_avx static __attribute__ ((__target__("avx")))
 #define function_avx512 static __attribute__ ((__target__("avx512f")))
 #define CTAssert(TestExpression) // TODO(casey): How do I get a static assert in C in CLANG?
 #else
-#define function_avx2 static
+#define function_avx static
 #define function_avx512 static
 #define CTAssert(TestExpression) static_assert(TestExpression, "Expression not true: (" #TestExpression ")")
 #endif
@@ -77,6 +77,7 @@ typedef unsigned int u32;
 typedef unsigned long long u64;
 typedef unsigned long long s64;
 typedef u32 b32;
+typedef float f32;
 
 typedef struct time
 {
