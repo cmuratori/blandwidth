@@ -1,331 +1,330 @@
 /* ========================================================================
    $File: work/tools/blandwidth/x64_blandwidth.c $
    $Date: 2020/06/16 21:46:28 UTC $
-   $Revision: 1 $
+   $Revision: 3 $
    $Creator: Casey Muratori $
    ======================================================================== */
-
-// NOTE(keeba): This is used instead of _mm256_xor_si256 because _mm256_xor_ps does not require AVX2.
-#define Xor256(A, B) _mm256_castps_si256(_mm256_xor_ps(_mm256_castsi256_ps(A), _mm256_castsi256_ps(B)))
 
 function void
 X64Read128(memory_operation *Op)
 {
-    CTAssert(BLOCK_SIZE == (8*SizeOf(__m128i)));
+    CTAssert(BLOCK_SIZE == (8*SizeOf(__m128)));
     
     memory_pattern Pattern = Op->Pattern;
-    __m128i *Values = (__m128i *)Op->Values;
+    f32 *Values = (f32 *)Op->Values;
     u64 SourceOffset = 0;
     u64 Count = Op->Count;
     
-    __m128i V0 = _mm_loadu_si128(Values + 0);
-    __m128i V1 = _mm_loadu_si128(Values + 1);
-    __m128i V2 = _mm_loadu_si128(Values + 2);
-    __m128i V3 = _mm_loadu_si128(Values + 3);
-    __m128i V4 = _mm_loadu_si128(Values + 4);
-    __m128i V5 = _mm_loadu_si128(Values + 5);
-    __m128i V6 = _mm_loadu_si128(Values + 6);
-    __m128i V7 = _mm_loadu_si128(Values + 7);
+    __m128 V0 = _mm_loadu_ps(Values + 0*4);
+    __m128 V1 = _mm_loadu_ps(Values + 1*4);
+    __m128 V2 = _mm_loadu_ps(Values + 2*4);
+    __m128 V3 = _mm_loadu_ps(Values + 3*4);
+    __m128 V4 = _mm_loadu_ps(Values + 4*4);
+    __m128 V5 = _mm_loadu_ps(Values + 5*4);
+    __m128 V6 = _mm_loadu_ps(Values + 6*4);
+    __m128 V7 = _mm_loadu_ps(Values + 7*4);
     
     while(Count--)
     {
         MCA_BEGIN(Read128);
         
-        __m128i *Source = (__m128i *)(Pattern.Source + SourceOffset);
+        f32 *Source = (f32 *)(Pattern.Source + SourceOffset);
         
-        __m128i L0 = _mm_loadu_si128(Source + 0);
-        __m128i L1 = _mm_loadu_si128(Source + 1);
-        __m128i L2 = _mm_loadu_si128(Source + 2);
-        __m128i L3 = _mm_loadu_si128(Source + 3);
-        __m128i L4 = _mm_loadu_si128(Source + 4);
-        __m128i L5 = _mm_loadu_si128(Source + 5);
-        __m128i L6 = _mm_loadu_si128(Source + 6);
-        __m128i L7 = _mm_loadu_si128(Source + 7);
+        __m128 L0 = _mm_loadu_ps(Source + 0*4);
+        __m128 L1 = _mm_loadu_ps(Source + 1*4);
+        __m128 L2 = _mm_loadu_ps(Source + 2*4);
+        __m128 L3 = _mm_loadu_ps(Source + 3*4);
+        __m128 L4 = _mm_loadu_ps(Source + 4*4);
+        __m128 L5 = _mm_loadu_ps(Source + 5*4);
+        __m128 L6 = _mm_loadu_ps(Source + 6*4);
+        __m128 L7 = _mm_loadu_ps(Source + 7*4);
         
-        V0 = _mm_xor_si128(V0, L0);
-        V1 = _mm_xor_si128(V1, L1);
-        V2 = _mm_xor_si128(V2, L2);
-        V3 = _mm_xor_si128(V3, L3);
-        V4 = _mm_xor_si128(V4, L4);
-        V5 = _mm_xor_si128(V5, L5);
-        V6 = _mm_xor_si128(V6, L6);
-        V7 = _mm_xor_si128(V7, L7);
+        V0 = _mm_xor_ps(V0, L0);
+        V1 = _mm_xor_ps(V1, L1);
+        V2 = _mm_xor_ps(V2, L2);
+        V3 = _mm_xor_ps(V3, L3);
+        V4 = _mm_xor_ps(V4, L4);
+        V5 = _mm_xor_ps(V5, L5);
+        V6 = _mm_xor_ps(V6, L6);
+        V7 = _mm_xor_ps(V7, L7);
         
         SourceOffset = (SourceOffset + Pattern.SourceStride) & Pattern.SourceMask;
     }
         
     MCA_END(Read128);
     
-    _mm_storeu_si128(Values + 0, V0);
-    _mm_storeu_si128(Values + 1, V1);
-    _mm_storeu_si128(Values + 2, V2);
-    _mm_storeu_si128(Values + 3, V3);
-    _mm_storeu_si128(Values + 4, V4);
-    _mm_storeu_si128(Values + 5, V5);
-    _mm_storeu_si128(Values + 6, V6);
-    _mm_storeu_si128(Values + 7, V7);
+    _mm_storeu_ps(Values + 0*4, V0);
+    _mm_storeu_ps(Values + 1*4, V1);
+    _mm_storeu_ps(Values + 2*4, V2);
+    _mm_storeu_ps(Values + 3*4, V3);
+    _mm_storeu_ps(Values + 4*4, V4);
+    _mm_storeu_ps(Values + 5*4, V5);
+    _mm_storeu_ps(Values + 6*4, V6);
+    _mm_storeu_ps(Values + 7*4, V7);
 }
 
 function void
 X64Write128(memory_operation *Op)
 {
-    CTAssert(BLOCK_SIZE == (8*SizeOf(__m128i)));
+    CTAssert(BLOCK_SIZE == (8*SizeOf(__m128)));
     
     memory_pattern Pattern = Op->Pattern;
-    __m128i *Values = (__m128i *)Op->Values;
+    f32 *Values = (f32 *)Op->Values;
     u64 DestOffset = 0;
     u64 Count = Op->Count;
     
-    __m128i V0 = _mm_loadu_si128(Values + 0);
-    __m128i V1 = _mm_loadu_si128(Values + 1);
-    __m128i V2 = _mm_loadu_si128(Values + 2);
-    __m128i V3 = _mm_loadu_si128(Values + 3);
-    __m128i V4 = _mm_loadu_si128(Values + 4);
-    __m128i V5 = _mm_loadu_si128(Values + 5);
-    __m128i V6 = _mm_loadu_si128(Values + 6);
-    __m128i V7 = _mm_loadu_si128(Values + 7);
+    __m128 V0 = _mm_loadu_ps(Values + 0*4);
+    __m128 V1 = _mm_loadu_ps(Values + 1*4);
+    __m128 V2 = _mm_loadu_ps(Values + 2*4);
+    __m128 V3 = _mm_loadu_ps(Values + 3*4);
+    __m128 V4 = _mm_loadu_ps(Values + 4*4);
+    __m128 V5 = _mm_loadu_ps(Values + 5*4);
+    __m128 V6 = _mm_loadu_ps(Values + 6*4);
+    __m128 V7 = _mm_loadu_ps(Values + 7*4);
 
     while(Count--)
     {
         MCA_BEGIN(Write128);
-    
-        __m128i *Dest = (__m128i *)(Pattern.Dest + DestOffset);
         
-        V0 = _mm_xor_si128(V0, V1);
-        V1 = _mm_xor_si128(V1, V2);
-        V2 = _mm_xor_si128(V2, V3);
-        V3 = _mm_xor_si128(V3, V4);
-        V4 = _mm_xor_si128(V4, V5);
-        V5 = _mm_xor_si128(V5, V6);
-        V6 = _mm_xor_si128(V6, V7);
-        V7 = _mm_xor_si128(V7, V0);
+        f32 *Dest = (f32 *)(Pattern.Dest + DestOffset);
         
-        _mm_storeu_si128(Dest + 0, V0);
-        _mm_storeu_si128(Dest + 1, V1);
-        _mm_storeu_si128(Dest + 2, V2);
-        _mm_storeu_si128(Dest + 3, V3);
-        _mm_storeu_si128(Dest + 4, V4);
-        _mm_storeu_si128(Dest + 5, V5);
-        _mm_storeu_si128(Dest + 6, V6);
-        _mm_storeu_si128(Dest + 7, V7);
+        V0 = _mm_xor_ps(V0, V1);
+        V1 = _mm_xor_ps(V1, V2);
+        V2 = _mm_xor_ps(V2, V3);
+        V3 = _mm_xor_ps(V3, V4);
+        V4 = _mm_xor_ps(V4, V5);
+        V5 = _mm_xor_ps(V5, V6);
+        V6 = _mm_xor_ps(V6, V7);
+        V7 = _mm_xor_ps(V7, V0);
+        
+        _mm_storeu_ps(Dest + 0*4, V0);
+        _mm_storeu_ps(Dest + 1*4, V1);
+        _mm_storeu_ps(Dest + 2*4, V2);
+        _mm_storeu_ps(Dest + 3*4, V3);
+        _mm_storeu_ps(Dest + 4*4, V4);
+        _mm_storeu_ps(Dest + 5*4, V5);
+        _mm_storeu_ps(Dest + 6*4, V6);
+        _mm_storeu_ps(Dest + 7*4, V7);
         
         DestOffset = (DestOffset + Pattern.DestStride) & Pattern.DestMask;
     }
     MCA_END(Write128);
     
-    _mm_storeu_si128(Values + 0, V0);
-    _mm_storeu_si128(Values + 1, V1);
-    _mm_storeu_si128(Values + 2, V2);
-    _mm_storeu_si128(Values + 3, V3);
-    _mm_storeu_si128(Values + 4, V4);
-    _mm_storeu_si128(Values + 5, V5);
-    _mm_storeu_si128(Values + 6, V6);
-    _mm_storeu_si128(Values + 7, V7);
+    _mm_storeu_ps(Values + 0*4, V0);
+    _mm_storeu_ps(Values + 1*4, V1);
+    _mm_storeu_ps(Values + 2*4, V2);
+    _mm_storeu_ps(Values + 3*4, V3);
+    _mm_storeu_ps(Values + 4*4, V4);
+    _mm_storeu_ps(Values + 5*4, V5);
+    _mm_storeu_ps(Values + 6*4, V6);
+    _mm_storeu_ps(Values + 7*4, V7);
 }
 
 function void
 X64ReadWrite128(memory_operation *Op)
 {
-    CTAssert(BLOCK_SIZE == (8*SizeOf(__m128i)));
+    CTAssert(BLOCK_SIZE == (8*SizeOf(__m128)));
     
     memory_pattern Pattern = Op->Pattern;
-    __m128i *Values = (__m128i *)Op->Values;
+    f32 *Values = (f32 *)Op->Values;
     u64 SourceOffset = 0;
     u64 DestOffset = 0;
     u64 Count = Op->Count;
     
-    __m128i V0 = _mm_loadu_si128(Values + 0);
-    __m128i V1 = _mm_loadu_si128(Values + 1);
-    __m128i V2 = _mm_loadu_si128(Values + 2);
-    __m128i V3 = _mm_loadu_si128(Values + 3);
-    __m128i V4 = _mm_loadu_si128(Values + 4);
-    __m128i V5 = _mm_loadu_si128(Values + 5);
-    __m128i V6 = _mm_loadu_si128(Values + 6);
-    __m128i V7 = _mm_loadu_si128(Values + 7);
+    __m128 V0 = _mm_loadu_ps(Values + 0*4);
+    __m128 V1 = _mm_loadu_ps(Values + 1*4);
+    __m128 V2 = _mm_loadu_ps(Values + 2*4);
+    __m128 V3 = _mm_loadu_ps(Values + 3*4);
+    __m128 V4 = _mm_loadu_ps(Values + 4*4);
+    __m128 V5 = _mm_loadu_ps(Values + 5*4);
+    __m128 V6 = _mm_loadu_ps(Values + 6*4);
+    __m128 V7 = _mm_loadu_ps(Values + 7*4);
     
     while(Count--)
     {
         MCA_BEGIN(ReadWrite128);
         
-        __m128i *Source = (__m128i *)(Pattern.Source + SourceOffset);
-        __m128i *Dest = (__m128i *)(Pattern.Dest + DestOffset);
-
-        __m128i L0 = _mm_loadu_si128(Source + 0);
-        __m128i L1 = _mm_loadu_si128(Source + 1);
-        __m128i L2 = _mm_loadu_si128(Source + 2);
-        __m128i L3 = _mm_loadu_si128(Source + 3);
-
-        V0 = _mm_xor_si128(V0, L0);
-        V1 = _mm_xor_si128(V1, L1);
-        V2 = _mm_xor_si128(V2, L2);
-        V3 = _mm_xor_si128(V3, L3);
+        f32 *Source = (f32 *)(Pattern.Source + SourceOffset);
+        f32 *Dest = (f32 *)(Pattern.Dest + DestOffset);
         
-        _mm_storeu_si128(Dest + 0, V0);
-        _mm_storeu_si128(Dest + 1, V1);
-        _mm_storeu_si128(Dest + 2, V2);
-        _mm_storeu_si128(Dest + 3, V3);
+        __m128 L0 = _mm_loadu_ps(Source + 0*4);
+        __m128 L1 = _mm_loadu_ps(Source + 1*4);
+        __m128 L2 = _mm_loadu_ps(Source + 2*4);
+        __m128 L3 = _mm_loadu_ps(Source + 3*4);
         
-        __m128i L4 = _mm_loadu_si128(Source + 4);
-        __m128i L5 = _mm_loadu_si128(Source + 5);
-        __m128i L6 = _mm_loadu_si128(Source + 6);
-        __m128i L7 = _mm_loadu_si128(Source + 7);
+        V0 = _mm_xor_ps(V0, L0);
+        V1 = _mm_xor_ps(V1, L1);
+        V2 = _mm_xor_ps(V2, L2);
+        V3 = _mm_xor_ps(V3, L3);
         
-        V4 = _mm_xor_si128(V4, L4);
-        V5 = _mm_xor_si128(V5, L5);
-        V6 = _mm_xor_si128(V6, L6);
-        V7 = _mm_xor_si128(V7, L7);
+        _mm_storeu_ps(Dest + 0*4, V0);
+        _mm_storeu_ps(Dest + 1*4, V1);
+        _mm_storeu_ps(Dest + 2*4, V2);
+        _mm_storeu_ps(Dest + 3*4, V3);
         
-        _mm_storeu_si128(Dest + 4, V4);
-        _mm_storeu_si128(Dest + 5, V5);
-        _mm_storeu_si128(Dest + 6, V6);
-        _mm_storeu_si128(Dest + 7, V7);
+        __m128 L4 = _mm_loadu_ps(Source + 4*4);
+        __m128 L5 = _mm_loadu_ps(Source + 5*4);
+        __m128 L6 = _mm_loadu_ps(Source + 6*4);
+        __m128 L7 = _mm_loadu_ps(Source + 7*4);
+        
+        V4 = _mm_xor_ps(V4, L4);
+        V5 = _mm_xor_ps(V5, L5);
+        V6 = _mm_xor_ps(V6, L6);
+        V7 = _mm_xor_ps(V7, L7);
+        
+        _mm_storeu_ps(Dest + 4*4, V4);
+        _mm_storeu_ps(Dest + 5*4, V5);
+        _mm_storeu_ps(Dest + 6*4, V6);
+        _mm_storeu_ps(Dest + 7*4, V7);
         
         SourceOffset = (SourceOffset + Pattern.SourceStride) & Pattern.SourceMask;
         DestOffset = (DestOffset + Pattern.DestStride) & Pattern.DestMask;
     }
     MCA_END(ReadWrite128);
     
-    _mm_storeu_si128(Values + 0, V0);
-    _mm_storeu_si128(Values + 1, V1);
-    _mm_storeu_si128(Values + 2, V2);
-    _mm_storeu_si128(Values + 3, V3);
-    _mm_storeu_si128(Values + 4, V4);
-    _mm_storeu_si128(Values + 5, V5);
-    _mm_storeu_si128(Values + 6, V6);
-    _mm_storeu_si128(Values + 7, V7);
+    _mm_storeu_ps(Values + 0*4, V0);
+    _mm_storeu_ps(Values + 1*4, V1);
+    _mm_storeu_ps(Values + 2*4, V2);
+    _mm_storeu_ps(Values + 3*4, V3);
+    _mm_storeu_ps(Values + 4*4, V4);
+    _mm_storeu_ps(Values + 5*4, V5);
+    _mm_storeu_ps(Values + 6*4, V6);
+    _mm_storeu_ps(Values + 7*4, V7);
 }
 
-function_avx2 void
+function_avx void
 X64Read256(memory_operation *Op)
 {
-    CTAssert(BLOCK_SIZE == (4*SizeOf(__m256i)));
+    CTAssert(BLOCK_SIZE == (4*SizeOf(__m256)));
     
     memory_pattern Pattern = Op->Pattern;
-    __m256i *Values = (__m256i *)Op->Values;
+    f32 *Values = (f32 *)Op->Values;
     u64 SourceOffset = 0;
     u64 Count = Op->Count;
-
-    __m256i V0 = _mm256_loadu_si256(Values + 0);
-    __m256i V1 = _mm256_loadu_si256(Values + 1);
-    __m256i V2 = _mm256_loadu_si256(Values + 2);
-    __m256i V3 = _mm256_loadu_si256(Values + 3);
+    
+    __m256 V0 = _mm256_loadu_ps(Values + 0*8);
+    __m256 V1 = _mm256_loadu_ps(Values + 1*8);
+    __m256 V2 = _mm256_loadu_ps(Values + 2*8);
+    __m256 V3 = _mm256_loadu_ps(Values + 3*8);
     
     while(Count--)
     {
         MCA_BEGIN(Read256);
 
-        __m256i *Source = (__m256i *)(Pattern.Source + SourceOffset);
+        f32 *Source = (f32 *)(Pattern.Source + SourceOffset);
 
-        __m256i L0 = _mm256_loadu_si256(Source + 0);
-        __m256i L1 = _mm256_loadu_si256(Source + 1);
-        __m256i L2 = _mm256_loadu_si256(Source + 2);
-        __m256i L3 = _mm256_loadu_si256(Source + 3);
+        __m256 L0 = _mm256_loadu_ps(Source + 0*8);
+        __m256 L1 = _mm256_loadu_ps(Source + 1*8);
+        __m256 L2 = _mm256_loadu_ps(Source + 2*8);
+        __m256 L3 = _mm256_loadu_ps(Source + 3*8);
 
-        V0 = Xor256(V0, L0);
-        V1 = Xor256(V1, L1);
-        V2 = Xor256(V2, L2);
-        V3 = Xor256(V3, L3);
+        V0 = _mm256_xor_ps(V0, L0);
+        V1 = _mm256_xor_ps(V1, L1);
+        V2 = _mm256_xor_ps(V2, L2);
+        V3 = _mm256_xor_ps(V3, L3);
 
         SourceOffset = (SourceOffset + Pattern.SourceStride) & Pattern.SourceMask;
     }
     MCA_END(Read256);
     
-    _mm256_storeu_si256(Values + 0, V0);
-    _mm256_storeu_si256(Values + 1, V1);
-    _mm256_storeu_si256(Values + 2, V2);
-    _mm256_storeu_si256(Values + 3, V3);
+    _mm256_storeu_ps(Values + 0*8, V0);
+    _mm256_storeu_ps(Values + 1*8, V1);
+    _mm256_storeu_ps(Values + 2*8, V2);
+    _mm256_storeu_ps(Values + 3*8, V3);
 }
 
-function_avx2 void
+function_avx void
 X64Write256(memory_operation *Op)
 {
-    CTAssert(BLOCK_SIZE == (4*SizeOf(__m256i)));
+    CTAssert(BLOCK_SIZE == (4*SizeOf(__m256)));
     
     memory_pattern Pattern = Op->Pattern;
-    __m256i *Values = (__m256i *)Op->Values;
+    f32 *Values = (f32 *)Op->Values;
     u64 DestOffset = 0;
     u64 Count = Op->Count;
-
-    __m256i V0 = _mm256_loadu_si256(Values + 0);
-    __m256i V1 = _mm256_loadu_si256(Values + 1);
-    __m256i V2 = _mm256_loadu_si256(Values + 2);
-    __m256i V3 = _mm256_loadu_si256(Values + 3);
+    
+    __m256 V0 = _mm256_loadu_ps(Values + 0*8);
+    __m256 V1 = _mm256_loadu_ps(Values + 1*8);
+    __m256 V2 = _mm256_loadu_ps(Values + 2*8);
+    __m256 V3 = _mm256_loadu_ps(Values + 3*8);
     
     while(Count--)
     {
         MCA_BEGIN(Write256);
-
-        __m256i *Dest = (__m256i *)(Pattern.Dest + DestOffset);
-
-        V0 = Xor256(V0, V1);
-        V1 = Xor256(V1, V2);
-        V2 = Xor256(V2, V3);
-        V3 = Xor256(V3, V0);
         
-        _mm256_storeu_si256(Dest + 0, V0);
-        _mm256_storeu_si256(Dest + 1, V1);
-        _mm256_storeu_si256(Dest + 2, V2);
-        _mm256_storeu_si256(Dest + 3, V3);
+        f32 *Dest = (f32 *)(Pattern.Dest + DestOffset);
+        
+        V0 = _mm256_xor_ps(V0, V1);
+        V1 = _mm256_xor_ps(V1, V2);
+        V2 = _mm256_xor_ps(V2, V3);
+        V3 = _mm256_xor_ps(V3, V0);
+        
+        _mm256_storeu_ps(Dest + 0*8, V0);
+        _mm256_storeu_ps(Dest + 1*8, V1);
+        _mm256_storeu_ps(Dest + 2*8, V2);
+        _mm256_storeu_ps(Dest + 3*8, V3);
         
         DestOffset = (DestOffset + Pattern.DestStride) & Pattern.DestMask;
     }
     MCA_END(Write256);
-        
-    _mm256_storeu_si256(Values + 0, V0);
-    _mm256_storeu_si256(Values + 1, V1);
-    _mm256_storeu_si256(Values + 2, V2);
-    _mm256_storeu_si256(Values + 3, V3);
+    
+    _mm256_storeu_ps(Values + 0*8, V0);
+    _mm256_storeu_ps(Values + 1*8, V1);
+    _mm256_storeu_ps(Values + 2*8, V2);
+    _mm256_storeu_ps(Values + 3*8, V3);
 }
 
-function_avx2 void
+function_avx void
 X64ReadWrite256(memory_operation *Op)
 {
-    CTAssert(BLOCK_SIZE == (4*SizeOf(__m256i)));
+    CTAssert(BLOCK_SIZE == (4*SizeOf(__m256)));
 
     memory_pattern Pattern = Op->Pattern;
-    __m256i *Values = (__m256i *)Op->Values;
+    f32 *Values = (f32 *)Op->Values;
     u64 SourceOffset = 0;
     u64 DestOffset = 0;
     u64 Count = Op->Count;
     
-    __m256i V0 = _mm256_loadu_si256(Values + 0);
-    __m256i V1 = _mm256_loadu_si256(Values + 1);
-    __m256i V2 = _mm256_loadu_si256(Values + 2);
-    __m256i V3 = _mm256_loadu_si256(Values + 3);
+    __m256 V0 = _mm256_loadu_ps(Values + 0*8);
+    __m256 V1 = _mm256_loadu_ps(Values + 1*8);
+    __m256 V2 = _mm256_loadu_ps(Values + 2*8);
+    __m256 V3 = _mm256_loadu_ps(Values + 3*8);
     
     while(Count--)
     {
         MCA_BEGIN(ReadWrite256);
 
-        __m256i *Source = (__m256i *)(Pattern.Source + SourceOffset);
-        __m256i *Dest = (__m256i *)(Pattern.Dest + DestOffset);
+        f32 *Source = (f32 *)(Pattern.Source + SourceOffset);
+        f32 *Dest = (f32 *)(Pattern.Dest + DestOffset);
         
-        __m256i L0 = _mm256_loadu_si256(Source + 0);
-        __m256i L1 = _mm256_loadu_si256(Source + 1);
-        __m256i L2 = _mm256_loadu_si256(Source + 2);
-        __m256i L3 = _mm256_loadu_si256(Source + 3);
-
-        V0 = Xor256(V0, L0);
-        V1 = Xor256(V1, L1);
-        V2 = Xor256(V2, L2);
-        V3 = Xor256(V3, L3);
+        __m256 L0 = _mm256_loadu_ps(Source + 0*8);
+        __m256 L1 = _mm256_loadu_ps(Source + 1*8);
+        __m256 L2 = _mm256_loadu_ps(Source + 2*8);
+        __m256 L3 = _mm256_loadu_ps(Source + 3*8);
         
-        _mm256_storeu_si256(Dest + 0, V0);
-        _mm256_storeu_si256(Dest + 1, V1);
-        _mm256_storeu_si256(Dest + 2, V2);
-        _mm256_storeu_si256(Dest + 3, V3);
+        V0 = _mm256_xor_ps(V0, L0);
+        V1 = _mm256_xor_ps(V1, L1);
+        V2 = _mm256_xor_ps(V2, L2);
+        V3 = _mm256_xor_ps(V3, L3);
+        
+        _mm256_storeu_ps(Dest + 0*8, V0);
+        _mm256_storeu_ps(Dest + 1*8, V1);
+        _mm256_storeu_ps(Dest + 2*8, V2);
+        _mm256_storeu_ps(Dest + 3*8, V3);
         
         SourceOffset = (SourceOffset + Pattern.SourceStride) & Pattern.SourceMask;
         DestOffset = (DestOffset + Pattern.DestStride) & Pattern.DestMask;
     }
     MCA_END(ReadWrite256);
     
-    _mm256_storeu_si256(Values + 0, V0);
-    _mm256_storeu_si256(Values + 1, V1);
-    _mm256_storeu_si256(Values + 2, V2);
-    _mm256_storeu_si256(Values + 3, V3);
+    _mm256_storeu_ps(Values + 0*8, V0);
+    _mm256_storeu_ps(Values + 1*8, V1);
+    _mm256_storeu_ps(Values + 2*8, V2);
+    _mm256_storeu_ps(Values + 3*8, V3);
 }
 
+// NOTE(keeba): The X64*512 functions use _mm512_xor_si512 instead of _mm512_xor_ps because 512-bit vpxord is part
+// of base AVX-512, while 512-bit vxorps is part of the AVX512DQ extension.
 function_avx512 void
 X64Read512(memory_operation *Op)
 {
