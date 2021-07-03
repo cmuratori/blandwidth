@@ -20,7 +20,7 @@ If your system supports llvm-mca, the build.bat file will run it and write into 
 To run Blandwidth, run a release executable and pipe the output to the file where measurements should be stored, eg.: 
 
 ```
-build\blandwidth_msvc_release.exe > intel_core_i9_test.csv
+build\blandwidth_release_msvc.exe > intel_core_i9_test.csv
 ```
 
 During testing, it will write summary messages to stderr which you can use to track its progress.  Once complete, it will write a CSV to stdout with the statistics gathered for each test.
