@@ -7,12 +7,9 @@
 #ifndef __AVX512F__
 #define __AVX512F__
 #endif
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
 #include <cpuid.h>
 #include <immintrin.h>
-#include <sched.h>
+#include <pthread.h>
 #include <semaphore.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -225,7 +222,7 @@ AllocateAndClear(u64 Size) {
   return Result;
 }
 
-function int
+function void*
 ThreadEntryPoint(void* Arg) {
   linux_context* LinuxContext = (linux_context*)Arg;
   while (1) {
@@ -311,15 +308,23 @@ main(int argc, char** argv) {
   }
 
   u32 StackSize = 1024 * 1024;  // NOTE(btolsch): Mostly chosen for parity with win32 platform.
-  u32 CloneFlags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SYSVSEM | CLONE_SIGHAND | CLONE_THREAD;
+  pthread_attr_t ThreadAttrs;
+  int AttrResult = pthread_attr_init(&ThreadAttrs);
+  if (AttrResult != 0) {
+    Statusf("Unable to initialize pthread_attr_t\n");
+    exit(1);
+  }
+  pthread_attr_setstacksize(&ThreadAttrs, StackSize);
   for (u32 ThreadIndex = 0; ThreadIndex < MaxThreadCount; ++ThreadIndex) {
-    void* Stack = AllocateAndClear(StackSize);
-    int Result = clone(&ThreadEntryPoint, (u8*)Stack + StackSize, CloneFlags, &LinuxContext);
+    pthread_t ThreadId;
+    int Result = pthread_create(&ThreadId, &ThreadAttrs, &ThreadEntryPoint, &LinuxContext);
     if (Result < 0) {
       Statusf("Unable to start thread.\n");
       exit(1);
     }
+    pthread_detach(ThreadId);
   }
+  pthread_attr_destroy(&ThreadAttrs);
 
   // NOTE(btolsch): Run tests.
   Main(&LinuxContext.Context);
