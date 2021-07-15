@@ -88,6 +88,16 @@ Dataf(char const *Format, ...)
     WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), Buffer, Length, &Ignored, 0);
 }
 
+function u32
+Stringf(char *Buffer, char const *Format, ...)
+{
+    va_list Args;
+    va_start(Args, Format);
+    u32 Length = wvsprintf(Buffer, Format, Args);
+    va_end(Args);
+    return Length;
+}
+
 function void *
 AllocateAndClear(u64 Size)
 {
@@ -140,17 +150,17 @@ mainCRTStartup(void)
     // NOTE(casey): Determine base timer and CPU frequencies
     //
     
-    time BaseHz;
+    timestamp BaseHz;
     QueryPerformanceFrequency((LARGE_INTEGER *)&BaseHz.Counter);
     BaseHz.Clock = 0;
     
-    time SleepBegin;
+    timestamp SleepBegin;
     TIME_OPEN(SleepBegin);
     Sleep(1000);
-    time SleepEnd;
+    timestamp SleepEnd;
     TIME_CLOSE(SleepEnd);
     
-    time Delta = Subtract(SleepEnd, SleepBegin);
+    timestamp Delta = Subtract(SleepEnd, SleepBegin);
     BaseHz.Clock = (Delta.Clock * BaseHz.Counter) / Delta.Counter;
     
     //

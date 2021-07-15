@@ -59,7 +59,7 @@
 #ifdef __clang__
 #define function_avx2 static __attribute__ ((__target__("avx2")))
 #define function_avx512 static __attribute__ ((__target__("avx512f")))
-#define CTAssert(TestExpression) // TODO(casey): How do I get a static assert in C in CLANG?
+#define CTAssert(TestExpression) _Static_assert(TestExpression, "Expression not true: (" #TestExpression ")")
 #else
 #define function_avx2 static
 #define function_avx512 static
@@ -75,14 +75,14 @@
 typedef unsigned char u8;
 typedef unsigned int u32;
 typedef unsigned long long u64;
-typedef unsigned long long s64;
+typedef long long s64;
 typedef u32 b32;
 
-typedef struct time
+typedef struct timestamp
 {
     u64 Clock;
     u64 Counter;
-} time;
+} timestamp;
 
 typedef struct memory_operation memory_operation;
 typedef void memory_operation_handler(memory_operation *);
@@ -116,8 +116,8 @@ struct memory_operation
     // NOTE(casey): Output
     //
     
-    time StartStamp;
-    time EndStamp;
+    timestamp StartStamp;
+    timestamp EndStamp;
     
     // NOTE(casey): Because threads write back into their operations, care must be taken to ensure memory_operation
     // structures exactly fill cache lines.
@@ -127,9 +127,9 @@ CTAssert(SizeOf(memory_operation) == 128);
 
 typedef struct time_stat
 {
-    time Min;
-    time Max;
-    time Sum;
+    timestamp Min;
+    timestamp Max;
+    timestamp Sum;
     u32 Count;
 } time_stat;
 
@@ -154,7 +154,7 @@ typedef struct handler_table_entry
 
 typedef struct context
 {
-    time BaseHz;
+    timestamp BaseHz;
     u32 MaxThreadCount;
     
     u32 HandlerCount;
@@ -169,4 +169,5 @@ function void DispatchWork(context *Context, u32 OpCount, memory_operation *Ops)
 function memory_operation *ReceiveWorkResult(context *Context);
 function void Statusf(char const *Format, ...);
 function void Dataf(char const *Format, ...);
+function u32 Stringf(char *Buffer, char const *Format, ...);
 function void *AllocateAndClear(u64 Size);

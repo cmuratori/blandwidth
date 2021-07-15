@@ -51,10 +51,10 @@ AllocateAndFill(u64 Size)
     return(Result);
 }
     
-function time
-Subtract(time A, time B)
+function timestamp
+Subtract(timestamp A, timestamp B)
 {
-    time Result;
+    timestamp Result;
     
     Result.Clock = A.Clock - B.Clock;
     Result.Counter = A.Counter - B.Counter;
@@ -62,10 +62,10 @@ Subtract(time A, time B)
     return(Result);
 }
 
-function time
+function timestamp
 Average(time_stat A)
 {
-    time Result = A.Sum;
+    timestamp Result = A.Sum;
 
     if(A.Count)
     {
@@ -77,7 +77,7 @@ Average(time_stat A)
 }
 
 function void
-Include(time_stat *Stat, time T)
+Include(time_stat *Stat, timestamp T)
 {
     if(Stat->Count)
     {
@@ -98,7 +98,7 @@ Include(time_stat *Stat, time T)
 }
 
 function u64
-GetNanoseconds(time BaseHz, u64 A)
+GetNanoseconds(timestamp BaseHz, u64 A)
 {
     u64 NSPerS = 1000ULL * 1000 * 1000;
     u64 Result = (NSPerS*A)/BaseHz.Counter;
@@ -106,7 +106,7 @@ GetNanoseconds(time BaseHz, u64 A)
 }
 
 function u64
-GetBandwidthAs(time BaseHz, memory_test_results *Res, u64 Unit)
+GetBandwidthAs(timestamp BaseHz, memory_test_results *Res, u64 Unit)
 {
     u64 Hz = BaseHz.Counter;
     u64 Measure = Res->Total.Min.Counter;
@@ -123,7 +123,7 @@ GetBandwidthAs(time BaseHz, memory_test_results *Res, u64 Unit)
 }
 
 function u64
-GetBandwidth(time BaseHz, memory_test_results *Res)
+GetBandwidth(timestamp BaseHz, memory_test_results *Res)
 {
     u64 Result = GetBandwidthAs(BaseHz, Res, 1);
     return(Result);
@@ -136,7 +136,7 @@ TimeOperation(context *Context, u32 OpCount, memory_operation *Operations, time_
     u64 CyclesSpentOnNewMin = 0;
     while(CyclesSpentOnNewMin < MaxCyclesToSpend)
     {
-        time Now;
+        timestamp Now;
         TIME_OPEN(Now);
         u64 StartGate = (Now.Counter + Context->BaseHz.Counter)/1000;
         for(u32 OpIndex = 0;
@@ -154,16 +154,16 @@ TimeOperation(context *Context, u32 OpCount, memory_operation *Operations, time_
             ++ThreadIndex)
         {
             memory_operation *ResultOp = ReceiveWorkResult(Context);
-            time ThreadTime = Subtract(ResultOp->EndStamp, ResultOp->StartStamp);
+            timestamp ThreadTime = Subtract(ResultOp->EndStamp, ResultOp->StartStamp);
             Include(ThreadStat, ThreadTime);
             Include(&ThisRun, ResultOp->EndStamp);
             Include(&ThisRun, ResultOp->StartStamp);
         }
         
-        time TotalTime = Subtract(ThisRun.Max, ThisRun.Min);
+        timestamp TotalTime = Subtract(ThisRun.Max, ThisRun.Min);
         CyclesSpentOnNewMin += TotalTime.Clock;
         
-        time PrevMin = TotalStat->Min;
+        timestamp PrevMin = TotalStat->Min;
         Include(TotalStat, TotalTime);
         if((TotalStat->Min.Clock != PrevMin.Clock) ||
            (TotalStat->Min.Counter != PrevMin.Counter))
@@ -270,7 +270,7 @@ Main(context *Context)
                     ++PrintSizePower;
                 }
                 
-                wsprintf(Results->Name, "%s %Iu%s/%ut", Context->Handlers[HandlerIndex].Name, PrintSize, PrintSizeTable[PrintSizePower], ThreadCount);
+                Stringf(Results->Name, "%s %Iu%s/%ut", Context->Handlers[HandlerIndex].Name, PrintSize, PrintSizeTable[PrintSizePower], ThreadCount);
                 
                 Results->TotalSize = 0;
                 for(u32 ThreadIndex = 0;
@@ -335,8 +335,8 @@ Main(context *Context)
         memory_test_results *Result = TestResults + ResultIndex;
         if(Result->Total.Count)
         {
-            time TotalAvg = Average(Result->Total);
-            time ThreadAvg = Average(Result->Thread);
+            timestamp TotalAvg = Average(Result->Total);
+            timestamp ThreadAvg = Average(Result->Thread);
             
             u64 MinTotalNS = GetNanoseconds(Context->BaseHz, Result->Total.Min.Counter);
             u64 MaxTotalNS = GetNanoseconds(Context->BaseHz, Result->Total.Max.Counter);
